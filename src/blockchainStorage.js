@@ -1,11 +1,11 @@
 import {readFile, writeFile} from 'node:fs/promises'
 import {getDate, monSecret} from "./divers.js";
 import {NotFoundError} from "./errors.js";
-import {createHash} from 'node:crypto'
-
+import {createHash} from 'node:crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 /* Chemin de stockage des blocks */
-const path = ''
+const path = 'data/blockchain.json'
 
 /**
  * Mes définitions
@@ -23,7 +23,13 @@ const path = ''
  * @return {Promise<any>}
  */
 export async function findBlocks() {
-    // A coder
+    return new Promise((resolve,reject)=> {
+        readFile(path, {encoding:'utf8'}).then((result)=>{
+            resolve(JSON.parse(result))
+        }).catch((error) => {
+            reject(error)
+        })
+    })
 }
 
 /**
@@ -40,7 +46,8 @@ export async function findBlock(partialBlock) {
  * @return {Promise<Block|null>}
  */
 export async function findLastBlock() {
-    // A coder
+    let blocks = await findBlocks();
+    return blocks.length===0?null:blocks[blocks.length-1];
 }
 
 /**
@@ -49,6 +56,26 @@ export async function findLastBlock() {
  * @return {Promise<Block[]>}
  */
 export async function createBlock(contenu) {
-    // A coder
+    let blocks = await findBlocks();
+    const lastBlock = await findLastBlock();
+
+    const id = uuidv4();
+    const nom = contenu.nom;
+    const don = contenu.don;
+    const date = getDate();
+    let hash = null;
+    if (lastBlock!=null) {
+        hash = createHash('sha256');
+    }
+    const block = {id,nom,don,date};
+    const newBlocks = [...blocks,block];
+
+    return new Promise((resolve,reject)=> {
+        writeFile(path, JSON.stringify(newBlocks,null,4), {encoding: 'utf8'}).then(() => {
+            resolve("Bien ajouté !");
+        }).catch((error) => {
+            reject("FF " + error)
+        });
+    })
 }
 
