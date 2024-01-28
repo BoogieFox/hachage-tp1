@@ -2,7 +2,7 @@
  * @description Definie la variable pour le hash du premier bloc
  * @type {string}
  */
-export const monSecret = "";
+export const monSecret = "Hello, World!";
 
 /**
  * @description Retourne un timestamp au format aaaammjj-hh:mm:ss

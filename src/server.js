@@ -7,17 +7,16 @@ createServer(async (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         const url = new URL(req.url, `http://${req.headers.host}`)
         const endpoint = `${req.method}:${url.pathname}`
-
         let results
 
         try {
             switch (endpoint) {
                 case 'GET:/blockchain':
+                    console.log("GET");
                     results = await liste(req, res, url)
-                    console.log("GET")
                     break
                 case 'POST:/blockchain':
-                    console.log("POST")
+                    console.log("POST");
                     results = await create(req, res)
                     break
                 default :

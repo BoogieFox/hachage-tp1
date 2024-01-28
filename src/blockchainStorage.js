@@ -23,13 +23,22 @@ const path = 'data/blockchain.json'
  * @return {Promise<any>}
  */
 export async function findBlocks() {
-    return new Promise((resolve,reject)=> {
-        readFile(path, {encoding:'utf8'}).then((result)=>{
-            resolve(JSON.parse(result))
-        }).catch((error) => {
-            reject(error)
-        })
-    })
+    // Version Promise explicite
+    // return new Promise((resolve,reject)=> {
+    //     readFile(path, {encoding:'utf8'}).then((result)=>{
+    //         resolve(JSON.parse(result))
+    //     }).catch((error) => {
+    //         reject(error)
+    //     })
+    // })
+
+    // Version Promise implicite
+    try {
+        const result = await readFile(path, { encoding: 'utf8' });
+        return JSON.parse(result);
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -38,7 +47,30 @@ export async function findBlocks() {
  * @return {Promise<Block[]>}
  */
 export async function findBlock(partialBlock) {
-    // A coder
+    let blocks = await findBlocks();
+    blocks.forEach(element => {
+        if (element.id===partialBlock) {
+            return element;
+        }
+    });
+    
+    return null;
+}
+
+/**
+ * Trouve un block à partir de son id
+ * @param partialBlock
+ * @return {Promise<Block[]>}
+ */
+export async function verifBlocks(partialBlock) {
+    let blocks = await findBlocks();
+    blocks.forEach(element => {
+        if (element.id===partialBlock) {
+            return element;
+        }
+    });
+    
+    return null;
 }
 
 /**
@@ -56,26 +88,53 @@ export async function findLastBlock() {
  * @return {Promise<Block[]>}
  */
 export async function createBlock(contenu) {
-    let blocks = await findBlocks();
-    const lastBlock = await findLastBlock();
+    // Version Promise explicite
+    // let blocks = await findBlocks();
+    // const lastBlock = await findLastBlock();
 
-    const id = uuidv4();
-    const nom = contenu.nom;
-    const don = contenu.don;
-    const date = getDate();
-    let hash = null;
-    if (lastBlock!=null) {
-        hash = createHash('sha256');
+    // const id = uuidv4();
+    // const nom = contenu.nom;
+    // const don = contenu.don;
+    // let block = null;
+    // const date = getDate();
+    // if (lastBlock!=null) {
+    //     const hash = createHash('sha256').update(JSON.stringify(lastBlock)).digest('hex');
+    //     block = { id, nom, don, date, hash};
+    // } else {
+    //     block = { id, nom, don, date};
+    //}
+    // const newBlocks = [...blocks,block];
+
+    // return new Promise((resolve,reject)=> {
+    //     writeFile(path, JSON.stringify(newBlocks,null,4), {encoding: 'utf8'}).then(() => {
+    //         resolve("Bien ajouté !");
+    //     }).catch((error) => {
+    //         reject("FF " + error)
+    //     });
+    // })
+
+    //Version Promise implicite
+    try {
+        let blocks = await findBlocks();
+        const lastBlock = await findLastBlock();
+
+        const id = uuidv4();
+        const nom = contenu.nom;
+        const don = contenu.don;
+        const date = getDate();
+        let hash = null;
+        if (lastBlock != null) {
+            hash = createHash('sha256').update(JSON.stringify(lastBlock)).digest('hex');
+        } else {
+            hash = createHash('sha256').update(monSecret).digest('hex');
+        }
+        const block = { id, nom, don, date, hash};
+        const newBlocks = [...blocks, block];
+        await writeFile(path, JSON.stringify(newBlocks, null, 4), { encoding: 'utf8' });
+
+        return "Bien ajouté !";
+    } catch (error) {
+        throw "FF " + error;
     }
-    const block = {id,nom,don,date};
-    const newBlocks = [...blocks,block];
-
-    return new Promise((resolve,reject)=> {
-        writeFile(path, JSON.stringify(newBlocks,null,4), {encoding: 'utf8'}).then(() => {
-            resolve("Bien ajouté !");
-        }).catch((error) => {
-            reject("FF " + error)
-        });
-    })
 }
 
