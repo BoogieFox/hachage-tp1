@@ -1,6 +1,6 @@
 
 import {createServer} from "node:http"
-import {create, liste} from "./blockchain.js";
+import {create, liste, integrity, single} from "./blockchain.js";
 import {NotFoundError} from "./errors.js";
 
 createServer(async (req, res) => {
@@ -14,6 +14,12 @@ createServer(async (req, res) => {
                 case 'GET:/blockchain':
                     console.log("GET");
                     results = await liste(req, res, url)
+                    break
+                case 'GET:/blockchain/id':
+                    results = await single(req,res,url)
+                    break
+                case 'GET:/blockchain/integrity':
+                    results = await integrity(req,res,url)
                     break
                 case 'POST:/blockchain':
                     console.log("POST");

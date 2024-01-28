@@ -48,29 +48,29 @@ export async function findBlocks() {
  */
 export async function findBlock(partialBlock) {
     let blocks = await findBlocks();
-    blocks.forEach(element => {
-        if (element.id===partialBlock) {
-            return element;
+    for (let i=0;i<blocks.length;i++) {
+        if (blocks[i].id===partialBlock) {
+            if (i==0||blocks[i].hash===calculateHash(JSON.stringify(blocks[i-1]))) {
+                return blocks[i];
+            }
+            return { error: "Block is not reliable." };
         }
-    });
-    
-    return null;
+    }
+    return { error: "Block could not be found." };
 }
 
 /**
- * Trouve un block à partir de son id
- * @param partialBlock
- * @return {Promise<Block[]>}
+ * S'assure de l'intégrité de la chaîne
+ * @return {Promise<Boolean>}
  */
-export async function verifBlocks(partialBlock) {
+export async function verifBlocks() {
     let blocks = await findBlocks();
-    blocks.forEach(element => {
-        if (element.id===partialBlock) {
-            return element;
+    for (let i = 0;i<blocks.length-1;i++) {
+        if (calculateHash(JSON.stringify(blocks[i]))!==blocks[i+1].hash) {
+            return false;
         }
-    });
-    
-    return null;
+    }
+    return true;
 }
 
 /**
@@ -115,6 +115,12 @@ export async function createBlock(contenu) {
 
     //Version Promise implicite
     try {
+        // Version où on ne peut ajouter un block que si la chaîne est intègre
+        let integrity = await verifBlocks();
+        if (!integrity) {
+            return { error: "Chain is not integrated." };
+        }
+
         let blocks = await findBlocks();
         const lastBlock = await findLastBlock();
 
@@ -124,9 +130,9 @@ export async function createBlock(contenu) {
         const date = getDate();
         let hash = null;
         if (lastBlock != null) {
-            hash = createHash('sha256').update(JSON.stringify(lastBlock)).digest('hex');
+            hash = calculateHash(JSON.stringify(lastBlock));
         } else {
-            hash = createHash('sha256').update(monSecret).digest('hex');
+            hash = calculateHash(monSecret);
         }
         const block = { id, nom, don, date, hash};
         const newBlocks = [...blocks, block];
@@ -136,5 +142,9 @@ export async function createBlock(contenu) {
     } catch (error) {
         throw "FF " + error;
     }
+}
+
+function calculateHash(toHash) {
+    return createHash('sha256').update(toHash).digest('hex');
 }
 
