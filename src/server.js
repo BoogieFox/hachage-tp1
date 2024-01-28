@@ -15,7 +15,7 @@ createServer(async (req, res) => {
                     console.log("GET");
                     results = await liste(req, res, url)
                     break
-                case 'GET:/blockchain/id':
+                case 'GET:/blockchain/single':
                     results = await single(req,res,url)
                     break
                 case 'GET:/blockchain/integrity':

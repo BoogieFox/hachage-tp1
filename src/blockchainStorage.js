@@ -44,16 +44,18 @@ export async function findBlocks() {
 /**
  * Trouve un block à partir de son id
  * @param partialBlock
- * @return {Promise<Block[]>}
+ * @return {Promise<Block | { error: string }>}
  */
 export async function findBlock(partialBlock) {
     let blocks = await findBlocks();
     for (let i=0;i<blocks.length;i++) {
         if (blocks[i].id===partialBlock) {
-            if (i==0||blocks[i].hash===calculateHash(JSON.stringify(blocks[i-1]))) {
-                return blocks[i];
+            if (i==0&&blocks[0].hash!==calculateHash(monSecret)) {
+                return { error: "Block is not reliable." };
+            } else if (blocks[i].hash!==calculateHash(JSON.stringify(blocks[i-1]))) {
+                return { error: "Block is not reliable." };
             }
-            return { error: "Block is not reliable." };
+            return blocks[i]
         }
     }
     return { error: "Block could not be found." };
@@ -61,16 +63,22 @@ export async function findBlock(partialBlock) {
 
 /**
  * S'assure de l'intégrité de la chaîne
- * @return {Promise<Boolean>}
+ * @return {Promise<Boolean | {error: string}>}
  */
 export async function verifBlocks() {
-    let blocks = await findBlocks();
+    const blocks = await findBlocks();
+    if (blocks.length==0) {
+        return { error: "Blockchain is empty." }
+    }
+    if (blocks[0].hash!==calculateHash(monSecret)) {
+        return JSON.stringify(false);
+    }
     for (let i = 0;i<blocks.length-1;i++) {
         if (calculateHash(JSON.stringify(blocks[i]))!==blocks[i+1].hash) {
-            return false;
+            return JSON.stringify(false);
         }
     }
-    return true;
+    return JSON.stringify(true);
 }
 
 /**
@@ -85,7 +93,7 @@ export async function findLastBlock() {
 /**
  * Creation d'un block depuis le contenu json
  * @param contenu
- * @return {Promise<Block[]>}
+ * @return {Promise<String | { error: string }>}
  */
 export async function createBlock(contenu) {
     // Version Promise explicite
@@ -138,9 +146,9 @@ export async function createBlock(contenu) {
         const newBlocks = [...blocks, block];
         await writeFile(path, JSON.stringify(newBlocks, null, 4), { encoding: 'utf8' });
 
-        return "Bien ajouté !";
+        return { result: "Votre block a bien été ajouté." , block: block};
     } catch (error) {
-        throw "FF " + error;
+        return { error: error };
     }
 }
 
